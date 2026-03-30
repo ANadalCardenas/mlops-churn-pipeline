@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+docs/
+models/
+reports/
+.env
+data/v1/
+data/v2/
+.dvc/config.local
