@@ -1,0 +1,14 @@
+# GitHub Actions CI workflow triggered on every pull_request event
+# (opened, synchronize, reopened).
+#
+# Steps:
+#   1. Checks out the repo and sets up Python 3.11
+#   2. Installs dependencies from requirements.txt
+#   3. Pulls versioned data from Cloudflare R2 via DVC
+#      (uses R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT_URL secrets)
+#   4. Runs pipelines/orchestration.py to train and evaluate the model
+#      (uses MLFLOW_TRACKING_URI, MLFLOW_TRACKING_USERNAME,
+#       MLFLOW_TRACKING_PASSWORD secrets)
+#   5. Posts a markdown metrics table as a comment on the PR
+#      (reads train_metrics.json and model_info.json from the CI run output)
+#   6. Uploads reports/ci_run/ as a build artifact for download
