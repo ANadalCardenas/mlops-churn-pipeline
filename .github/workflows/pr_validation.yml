@@ -12,3 +12,76 @@
 #   5. Posts a markdown metrics table as a comment on the PR
 #      (reads train_metrics.json and model_info.json from the CI run output)
 #   6. Uploads reports/ci_run/ as a build artifact for download
+
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Pull data with DVC
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+        run: dvc pull
+
+      - name: Train and evaluate
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        run: |
+          python pipelines/orchestration.py \
+            --data-version v1 \
+            --experiment-name churn-pr-${{ github.event.pull_request.number }} \
+            --run-name pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
+            --output-dir reports/ci_run
+
+      - name: Post metrics comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const metrics = JSON.parse(fs.readFileSync('reports/ci_run/train_metrics.json'));
+            const info = JSON.parse(fs.readFileSync('reports/ci_run/model_info.json'));
+            const dagshub_url = process.env.MLFLOW_TRACKING_URI;
+            const body = [
+              '## Model Metrics',
+              `**Run:** ${info.mlflow_run_id} | [View on DagsHub](${dagshub_url})`,
+              '',
+              '| Metric | Value |',
+              '|---|---|',
+              `| Accuracy | ${metrics.accuracy.toFixed(4)} |`,
+              `| Precision | ${metrics.precision.toFixed(4)} |`,
+              `| Recall | ${metrics.recall.toFixed(4)} |`,
+              `| F1 | ${metrics.f1.toFixed(4)} |`,
+              `| ROC AUC | ${metrics.roc_auc.toFixed(4)} |`,
+            ].join('\n');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-pr-${{ github.event.pull_request.number }}
+          path: reports/ci_run/
