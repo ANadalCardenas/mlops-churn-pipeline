@@ -126,6 +126,9 @@ def run_training(data_version: str, output_dir: str, experiment_name: str, run_n
     # Write model_info.json next to train_metrics.json in the output directory
     save_json(model_info, os.path.join(output_dir, "model_info.json"))
 
+    # Return the run ID so orchestration.py can use it for model registration
+    return run.info.run_id
+
 
 if __name__ == "__main__":
     # This block only runs when the script is executed directly (not when imported by orchestration.py)
