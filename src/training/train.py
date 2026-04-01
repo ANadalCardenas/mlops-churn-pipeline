@@ -23,6 +23,7 @@ from datetime import datetime  # standard library: used to stamp the training ti
 
 import mlflow            # MLflow client: tracks params, metrics, and artifacts to the remote server
 import mlflow.sklearn    # MLflow's sklearn integration: log_model and save_model for sklearn pipelines
+from mlflow.models import infer_signature  # infers input/output schema from real data to document the model API
 from sklearn.model_selection import train_test_split  # splits data into train and test sets
 
 # Internal modules — each one handles a single responsibility
@@ -102,8 +103,12 @@ def run_training(data_version: str, output_dir: str, experiment_name: str, run_n
         # Upload every file in figures_dir (all three PNGs) as artifacts for this run
         mlflow.log_artifacts(figures_dir)
 
+        # infer_signature records the input column names/types and the output shape,
+        # so anyone loading this model knows exactly what data it expects
+        signature = infer_signature(X_train, pipeline.predict(X_train))
+
         # Serialize and upload the fitted sklearn pipeline so it can be loaded later with mlflow.sklearn.load_model
-        mlflow.sklearn.log_model(pipeline, artifact_path="model")
+        mlflow.sklearn.log_model(pipeline, artifact_path="model", signature=signature, input_example=X_train.iloc[:5])
 
     # Also save a local copy of the model so it can be loaded without hitting the remote server
     mlflow.sklearn.save_model(pipeline, path=f"models/{data_version}/model_latest")
