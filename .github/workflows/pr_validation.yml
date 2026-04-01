@@ -22,6 +22,8 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write  # required to post the metrics comment on the PR
     steps:
       - uses: actions/checkout@v4
 
