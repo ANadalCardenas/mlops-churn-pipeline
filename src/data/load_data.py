@@ -13,8 +13,8 @@ import pandas as pd
 
 # Map version strings to their CSV paths; extend here when new data versions arrive
 DATA_PATHS = {
-    "v1": "data/v1/churn.csv",
-    "v2": "data/v2/churn.csv",
+    "v1": "data/v1/churn_raw.csv",
+    "v2": "data/v2/churn_raw.csv",
 }
 
 
