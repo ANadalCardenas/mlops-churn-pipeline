@@ -19,6 +19,7 @@ CLI args: --data-version, --output-dir, --experiment-name, --run-name
 
 import argparse          # standard library: parses command-line arguments
 import os                # standard library: file system operations (makedirs, path joins, getenv)
+import shutil            # standard library: used to delete the local model directory before overwriting it
 from datetime import datetime  # standard library: used to stamp the training timestamp in model_info.json
 
 import mlflow            # MLflow client: tracks params, metrics, and artifacts to the remote server
@@ -110,8 +111,13 @@ def run_training(data_version: str, output_dir: str, experiment_name: str, run_n
         # Serialize and upload the fitted sklearn pipeline so it can be loaded later with mlflow.sklearn.load_model
         mlflow.sklearn.log_model(pipeline, artifact_path="model", signature=signature, input_example=X_train.iloc[:5])
 
-    # Also save a local copy of the model so it can be loaded without hitting the remote server
-    mlflow.sklearn.save_model(pipeline, path=f"models/{data_version}/model_latest")
+    # Remove any previous local copy before saving — MLflow refuses to overwrite a non-empty directory
+    local_model_path = f"models/{data_version}/model_latest"
+    if os.path.exists(local_model_path):
+        shutil.rmtree(local_model_path)
+
+    # Save a local copy of the model so it can be loaded without hitting the remote server
+    mlflow.sklearn.save_model(pipeline, path=local_model_path)
 
     # Collect metadata about this training run into a single JSON file for traceability
     model_info = {

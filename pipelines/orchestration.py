@@ -66,13 +66,14 @@ if __name__ == "__main__":
 
         if args.model_stage and args.model_stage != "None":
             client = mlflow.MlflowClient()
-            # archive_existing_versions=True moves any current holder of this stage to Archived,
-            # ensuring only one version is active in a given stage at any time
-            client.transition_model_version_stage(
+            # Aliases replace the deprecated stages API (removed in MLflow 3.0).
+            # An alias is a named pointer to a specific version — setting it on a new version
+            # automatically moves the pointer away from the previous one, achieving the same
+            # "only one active version per stage" behaviour without the deprecation warning.
+            client.set_registered_model_alias(
                 name="churn-model",
+                alias=args.model_stage,   # e.g. "Staging" or "Production"
                 version=result.version,
-                stage=args.model_stage,
-                archive_existing_versions=True,
             )
 
         # Append registry metadata to the model_info.json already written by run_training()

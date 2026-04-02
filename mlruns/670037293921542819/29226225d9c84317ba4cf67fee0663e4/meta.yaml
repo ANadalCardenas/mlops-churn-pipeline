@@ -1,0 +1,15 @@
+artifact_uri: file:///home/anadal/workspace/mlops_churn_pipeline/mlruns/670037293921542819/29226225d9c84317ba4cf67fee0663e4/artifacts
+end_time: 1775038466017
+entry_point_name: ''
+experiment_id: '670037293921542819'
+lifecycle_stage: active
+run_id: 29226225d9c84317ba4cf67fee0663e4
+run_name: registry-test
+run_uuid: 29226225d9c84317ba4cf67fee0663e4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775038463033
+status: 3
+tags: []
+user_id: anadal
