@@ -2,7 +2,7 @@
 Single CLI entrypoint for the full ML pipeline. Imports and calls src/ modules
 in the correct order:
 
-1. Parses CLI arguments (--data-version, --experiment-name, --run-name,
+1.  Parses CLI arguments (--data-version, --experiment-name, --run-name,
    --output-dir, --register-model, --model-stage)
 2. Creates the output directory tree (output_dir/ and output_dir/figures/)
 3. Delegates to train.run_training(...) to execute the complete pipeline
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         experiment_name=args.experiment_name,
         run_name=args.run_name,
     )
-
+    # Register the model in the MLflow Model Registry if requested, and update model_info.json with registry metadata
     if args.register_model:
         # Register the run's model artifact under the logical name "churn-model";
         # the registry auto-increments the version number on each call
