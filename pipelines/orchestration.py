@@ -22,6 +22,7 @@ CLI args:
 
 import argparse
 import os
+import subprocess
 import sys
 
 import mlflow
@@ -44,6 +45,8 @@ if __name__ == "__main__":
 
     # "None" as a string choice lets CI pass it explicitly without triggering a stage transition
     parser.add_argument("--model-stage", default=None, choices=["None", "Staging", "Production"])
+    parser.add_argument("--build-docker-image", action="store_true", default=False)
+    parser.add_argument("--image-tag", default=None)
     args = parser.parse_args()
 
     # Create the output directory tree before training so sub-modules can write freely
@@ -86,3 +89,10 @@ if __name__ == "__main__":
             "registry_model_uri": f"models:/churn-model/{result.version}",
         })
         save_json(model_info, model_info_path)
+
+    if args.build_docker_image:
+        subprocess.run([
+            "mlflow", "models", "build-docker",
+            "-m", f"models/{args.data_version}/model_latest",
+            "-n", args.image_tag,
+        ], check=True)

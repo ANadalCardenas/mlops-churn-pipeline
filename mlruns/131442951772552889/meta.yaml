@@ -1,0 +1,6 @@
+artifact_location: file:///home/anadal/workspace/mlops_churn_pipeline/mlruns/131442951772552889
+creation_time: 1775147376492
+experiment_id: '131442951772552889'
+last_update_time: 1775147376492
+lifecycle_stage: active
+name: churn-experiment

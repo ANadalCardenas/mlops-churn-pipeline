@@ -1,0 +1,15 @@
+artifact_uri: file:///home/anadal/workspace/mlops_churn_pipeline/mlruns/131442951772552889/39923b209e294377a69c468a6dbb5154/artifacts
+end_time: 1775147380924
+entry_point_name: ''
+experiment_id: '131442951772552889'
+lifecycle_stage: active
+run_id: 39923b209e294377a69c468a6dbb5154
+run_name: orchestration-run
+run_uuid: 39923b209e294377a69c468a6dbb5154
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775147377903
+status: 3
+tags: []
+user_id: anadal

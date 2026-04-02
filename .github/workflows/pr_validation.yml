@@ -51,7 +51,23 @@ jobs:
             --data-version v1 \
             --experiment-name churn-pr-${{ github.event.pull_request.number }} \
             --run-name pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
-            --output-dir reports/ci_run
+            --output-dir reports/ci_run \
+            --register-model \
+            --model-stage Staging
+
+      - name: Build Docker image
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        run: |
+          REGISTRY_VERSION=$(python -c "import json; d=json.load(open('reports/ci_run/model_info.json')); print(d.get('registry_model_version', 'unknown'))")
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          python pipelines/orchestration.py \
+            --data-version v1 \
+            --output-dir reports/ci_run \
+            --build-docker-image \
+            --image-tag churn-model:v1-staging-${REGISTRY_VERSION}-${SHORT_SHA}
 
       - name: Post metrics comment
         uses: actions/github-script@v7
@@ -72,6 +88,8 @@ jobs:
               `| Recall | ${metrics.recall.toFixed(4)} |`,
               `| F1 | ${metrics.f1.toFixed(4)} |`,
               `| ROC AUC | ${metrics.roc_auc.toFixed(4)} |`,
+              `| Registry Version | ${info.registry_model_version} |`,
+              `| Registry Stage | ${info.registry_stage} |`,
             ].join('\n');
             github.rest.issues.createComment({
               issue_number: context.issue.number,
