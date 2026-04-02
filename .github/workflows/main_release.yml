@@ -1,0 +1,58 @@
+name: Main Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Pull data with DVC
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+        run: dvc pull
+
+      - name: Train, register, and promote to Production
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        run: |
+          python pipelines/orchestration.py \
+            --data-version v1 \
+            --experiment-name churn-main \
+            --run-name main-${{ github.sha }} \
+            --output-dir reports/release \
+            --register-model \
+            --model-stage Production
+
+      - name: Build Production Docker image
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        run: |
+          REGISTRY_VERSION=$(python -c "import json; d=json.load(open('reports/release/model_info.json')); print(d.get('registry_model_version', 'unknown'))")
+          python pipelines/orchestration.py \
+            --data-version v1 \
+            --output-dir reports/release \
+            --build-docker-image \
+            --image-tag churn-model:v1-production-${REGISTRY_VERSION}
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: reports/release/
