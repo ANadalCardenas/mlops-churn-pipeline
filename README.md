@@ -16,25 +16,30 @@ This project builds the infrastructure that answers those questions automaticall
 
 ```mermaid
 flowchart TD
-    A[New data arrives v2] --> B[dvc add + dvc push\nData versioned in Cloudflare R2]
-    B --> C[Open PR on feat/v2-retrain]
+    A[v1 data available] --> B[Train initial model\non v1 data]
+    B --> C[Register as Production\nin MLflow Model Registry]
+    C --> D[Model deployed\nreal-world data starts drifting]
 
-    C --> D[GitHub Actions — PR Validation]
+    D --> E[New data arrives v2\nhigher charges, longer tenures...]
+    E --> F[dvc add + dvc push\nData versioned in Cloudflare R2]
+    F --> G[Open PR on feat/v2-retrain]
 
-    D --> E[Train candidate\nv2 data → Staging]
-    D --> F[Train baseline\nv1 data from main]
+    G --> H[GitHub Actions — PR Validation]
 
-    E --> G[compare.py\nDelta per metric\nBETTER / WORSE verdict]
-    F --> G
+    H --> I[Train candidate\nv2 data → Staging]
+    H --> J[Train baseline\nv1 data from main]
 
-    G --> H[Post validation report\nas PR comment]
-    G --> I[Build Docker image\ntagged with registry version]
-    G --> J[Upload artifacts\nto CI run]
+    I --> K[compare.py\nDelta per metric\nBETTER / WORSE verdict]
+    J --> K
 
-    H --> K{PR approved?}
-    K -- Yes --> L[Merge to main]
-    L --> M[main_release.yml\nPromote to Production]
-    K -- No --> N[PR stays open\nfor showcase]
+    K --> L[Post validation report\nas PR comment]
+    K --> M[Build Docker image\ntagged with registry version]
+    K --> N[Upload artifacts\nto CI run]
+
+    L --> O{PR approved?}
+    O -- Yes --> P[Merge to main]
+    P --> Q[main_release.yml\nPromote to Production]
+    O -- No --> R[PR stays open\nfor showcase]
 ```
 
 ---
