@@ -2,9 +2,6 @@
 
 An end-to-end MLOps pipeline for customer churn prediction, built to demonstrate production-grade practices: data versioning, experiment tracking, CI-driven model comparison, model registry, and Docker packaging.
 
-> **Showcase PR (open, do not merge):** [feat/v2-retrain → main](https://github.com/ANadalCardenas/mlops-churn-pipeline/pull/4)
-> **DagsHub MLflow UI:** https://dagshub.com/ANadalCardenas/mlops-churn-pipeline.mlflow
-
 ---
 
 ## What problem does this project solve?
