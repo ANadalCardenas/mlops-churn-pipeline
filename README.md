@@ -1,12 +1,8 @@
 # MLOps Churn Pipeline
 
-An end-to-end MLOps pipeline for customer churn prediction, built to demonstrate production-grade practices: data versioning, experiment tracking, CI-driven model comparison, model registry, and Docker packaging.
+An end-to-end MLOps pipeline for customer churn prediction, includes: data versioning, experiment tracking, CI-driven model comparison, model registry, and Docker packaging.
 
----
-
-## What problem does this project solve?
-
-A telecom company wants to predict which customers will churn. That is a standard ML problem. The harder problem — and the one this project addresses — is what happens *after* the first model is deployed: data evolves, models degrade silently, and teams need a reliable way to know whether a code change makes the model better or worse before it reaches production.
+A telecom company wants to predict which customers will churn. That is a standard ML problem. The harder problem is what happens *after* the first model is deployed: data evolves, models degrade silently, and teams need a reliable way to know whether a code change makes the model better or worse before it reaches production.
 
 This project builds the infrastructure that answers those questions automatically, on every pull request.
 
@@ -39,7 +35,6 @@ flowchart TD
     L --> O{PR approved?}
     O -- Yes --> P[Merge to main]
     P --> Q[main_release.yml\nPromote to Production]
-    O -- No --> R[PR stays open\nfor showcase]
 ```
 
 ---
@@ -87,7 +82,7 @@ The project uses two dataset versions derived from the Telco Customer Churn data
 - **v1** — the original data, representing the state at initial deployment
 - **v2** — a derived dataset simulating real-world drift: more customers, higher monthly charges, longer tenures, and a shift toward long-term contracts
 
-Data files are never committed to Git. DVC stores a small metadata pointer (`.dvc` file) in the repository while the actual CSV files live in Cloudflare R2. This is the production standard for managing large data assets alongside code.
+Data files are never committed to Git. DVC stores a small metadata pointer (`.dvc` file) in the repository while the actual CSV files live in [Cloudflare R2](https://dash.cloudflare.com/62dea9498eca3d98808776c7baadd969/r2/overview). This is the production standard for managing large data assets alongside code.
 
 ---
 
@@ -112,7 +107,7 @@ The release workflow promotes the registered `Staging` model to `Production` and
 
 ## Model registry
 
-The MLflow Model Registry governs which version of the model is deployed at any point in time. Each version moves through lifecycle stages:
+The [MLflow Model Registry](https://dagshub.com/aina.nadal/mlops-churn-pipeline/models/churn-model) governs which version of the model is deployed at any point in time. Each version moves through lifecycle stages:
 
 | Stage | Meaning |
 |---|---|
