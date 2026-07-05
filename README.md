@@ -1,6 +1,6 @@
 # MLOps Churn Pipeline
 
-An end-to-end MLOps pipeline for customer churn prediction, includes: data versioning, experiment tracking, CI-driven model comparison, model registry, and Docker packaging.
+An end-to-end MLOps pipeline for customer churn prediction that includes: data versioning, experiment tracking, CI-driven model comparison, model registry, and Docker packaging.
 
 A telecom company wants to predict which customers will churn. That is a standard ML problem. The harder problem is what happens *after* the first model is deployed: data evolves, models degrade silently, and teams need a reliable way to know whether a code change makes the model better or worse before it reaches production.
 
@@ -34,7 +34,7 @@ flowchart TD
 
     L --> O{PR approved?}
     O -- Yes --> P[Merge to main]
-    P --> Q[main_release.yml\nPromote to Production]
+    P --> Q[Promote to Production\nmanually via orchestration.py --model-stage Production]
 ```
 
 ---
@@ -49,6 +49,7 @@ flowchart TD
 | CI/CD | GitHub Actions |
 | Containerisation | Docker via `mlflow models build-docker` |
 | ML | scikit-learn |
+| Testing | pytest |
 | Language | Python 3.11 |
 
 ---
@@ -62,6 +63,7 @@ flowchart TD
 │   ├── training/       # Model training and MLflow logging
 │   ├── evaluation/     # Metrics, plots, and model comparison
 │   └── utils/          # Shared I/O helpers
+├── tests/              # Unit tests, mirrors the src/ layout above
 ├── pipelines/
 │   └── orchestration.py   # Single CLI entrypoint for the full pipeline
 ├── data/
@@ -69,7 +71,7 @@ flowchart TD
 │   └── v2.dvc             # Pointer to v2 dataset in R2
 ├── .github/workflows/
 │   ├── pr_validation.yml  # CI: train, compare, comment, build Docker
-│   └── main_release.yml   # CI: promote to Production on merge
+│   └── tests.yml          # CI: run the pytest suite
 └── images/
 ```
 
@@ -88,7 +90,11 @@ Data files are never committed to Git. DVC stores a small metadata pointer (`.dv
 
 ## CI/CD workflow
 
-### On every pull request
+### Tests
+
+On every pull request (opened, synchronized, or reopened), the `tests.yml` workflow installs dependencies and runs the `pytest` suite in `tests/`. It's fully hermetic (no DVC pull and no MLflow/DagsHub secrets required) since the tests mock the dataset and point MLflow at a local file store.
+
+### Model validation
 
 When a PR is opened or updated, GitHub Actions automatically:
 
@@ -98,10 +104,6 @@ When a PR is opened or updated, GitHub Actions automatically:
 4. Posts the validation report as a PR comment — updated in place on re-runs, never duplicated
 5. Builds a Docker image tagged with the registry version and commit SHA
 6. Uploads all reports as downloadable CI artifacts
-
-### On merge to main
-
-The release workflow promotes the registered `Staging` model to `Production` and archives the previous version.
 
 ---
 
@@ -149,3 +151,17 @@ python src/evaluation/compare.py \
   --baseline  reports/baseline/train_metrics.json \
   --output-dir reports/
 ```
+
+---
+
+## Running tests
+
+```bash
+# Install dependencies (includes pytest)
+pip install -r requirements.txt
+
+# Run the test suite
+pytest
+```
+
+The suite is hermetic: it doesn't need `dvc pull` or MLflow/DagsHub credentials, since datasets are mocked and MLflow is pointed at a local file store during the tests.
