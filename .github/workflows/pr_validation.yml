@@ -19,6 +19,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  CANDIDATE_DATA_VERSION: v1  # data version trained/built for the PR branch (baseline always uses main's own default)
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -49,7 +52,7 @@ jobs:
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         run: |
           python pipelines/orchestration.py \
-            --data-version v2 \
+            --data-version ${{ env.CANDIDATE_DATA_VERSION }} \
             --experiment-name churn-pr-${{ github.event.pull_request.number }} \
             --run-name candidate-pr-${{ github.event.pull_request.number }} \
             --output-dir reports/candidate \
@@ -106,10 +109,10 @@ jobs:
           REGISTRY_VERSION=$(python -c "import json; d=json.load(open('reports/candidate/model_info.json')); print(d.get('registry_model_version', 'unknown'))")
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
           python pipelines/orchestration.py \
-            --data-version v2 \
+            --data-version ${{ env.CANDIDATE_DATA_VERSION }} \
             --output-dir reports/candidate \
             --build-docker-image \
-            --image-tag churn-model:v2-staging-${REGISTRY_VERSION}-${SHORT_SHA}
+            --image-tag churn-model:${{ env.CANDIDATE_DATA_VERSION }}-staging-${REGISTRY_VERSION}-${SHORT_SHA}
 
       # ── Post or update PR comment ─────────────────────────────────────────
       - name: Post validation report
