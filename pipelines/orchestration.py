@@ -88,6 +88,7 @@ if __name__ == "__main__":
             "registry_stage": args.model_stage or "None",
             "registry_model_uri": f"models:/churn-model/{result.version}",
         })
+        # Save the updated model info back to the same path, overwriting the previous version without registry metadata
         save_json(model_info, model_info_path)
 
     if args.build_docker_image:
