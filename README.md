@@ -62,6 +62,7 @@ flowchart TD
 │   ├── features/       # Feature engineering
 │   ├── training/       # Model training and MLflow logging
 │   ├── evaluation/     # Metrics, plots, and model comparison
+│   ├── inference/      # Production model inference and prediction logging
 │   └── utils/          # Shared I/O helpers
 ├── tests/              # Unit tests, mirrors the src/ layout above
 ├── pipelines/
@@ -69,6 +70,7 @@ flowchart TD
 ├── data/
 │   ├── v1.dvc             # Pointer to v1 dataset in R2
 │   └── v2.dvc             # Pointer to v2 dataset in R2
+├── Dockerfile.inference   # Image for running Production model inference
 ├── .github/workflows/
 │   ├── pr_validation.yml  # CI: train, compare, comment, build Docker
 │   └── tests.yml          # CI: run the pytest suite
@@ -126,6 +128,28 @@ The [MLflow Model Registry](https://dagshub.com/aina.nadal/mlops-churn-pipeline/
 Every training run logs parameters, metrics, evaluation plots, and the serialised model to the remote MLflow tracking server on DagsHub. The model artifact also includes the input schema, enabling direct serving via the MLflow REST API.
 
 ![MLflow artifacts](images/artifacts.png)
+
+---
+
+## Inference
+
+`src/inference/predict.py` loads `churn-model@Production` from the MLflow Model Registry, predicts on one customer record, and appends the result to a CSV file that emulates a prediction database. Each row stores `prediction_id`, `timestamp`, `model_version`, `input_data` (as JSON), and `prediction`.
+
+The `Production` alias is resolved to a concrete version before the model is loaded, so the stored `model_version` is always the version that produced the prediction.
+
+```bash
+# Build the inference image
+docker build -f Dockerfile.inference -t churn-inference .
+
+# Run one inference; predictions are appended to ./predictions/predictions.csv on the host
+docker run --rm \
+  --env-file .env \
+  -v "$(pwd)/predictions:/app/predictions" \
+  churn-inference \
+  --input '{"gender": "Female", "SeniorCitizen": 0, "Partner": "Yes", "Dependents": "No", "tenure": 1, "PhoneService": "No", "MultipleLines": "No phone service", "InternetService": "DSL", "OnlineSecurity": "No", "OnlineBackup": "Yes", "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check", "MonthlyCharges": 29.85, "TotalCharges": "29.85"}'
+```
+
+The MLflow/DagsHub credentials are passed through from the host environment variables of the same name.
 
 ---
 
