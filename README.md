@@ -29,7 +29,6 @@ flowchart TD
     J --> K
 
     K --> L[Post validation report\nas PR comment]
-    K --> M[Build Docker image\ntagged with registry version]
     K --> N[Upload artifacts\nto CI run]
 
     L --> O{PR approved?}
@@ -47,7 +46,7 @@ flowchart TD
 | Experiment tracking | MLflow hosted on DagsHub |
 | Model registry | MLflow Model Registry |
 | CI/CD | GitHub Actions |
-| Containerisation | Docker via `mlflow models build-docker` |
+| Containerisation | Docker (inference image via `Dockerfile.inference`) |
 | ML | scikit-learn |
 | Testing | pytest |
 | Language | Python 3.11 |
@@ -72,7 +71,7 @@ flowchart TD
 │   └── v2.dvc             # Pointer to v2 dataset in R2
 ├── Dockerfile.inference   # Image for running Production model inference
 ├── .github/workflows/
-│   ├── pr_validation.yml  # CI: train, compare, comment, build Docker
+│   ├── pr_validation.yml  # CI: train, compare, comment
 │   └── tests.yml          # CI: run the pytest suite
 └── images/
 ```
@@ -104,8 +103,7 @@ When a PR is opened or updated, GitHub Actions automatically:
 2. Checks out `main` and trains the **baseline model** on v1 data
 3. Runs `src/evaluation/compare.py` to compute metric deltas and apply a **BETTER / WORSE OR EQUAL** verdict (based on F1 and ROC AUC)
 4. Posts the validation report as a PR comment — updated in place on re-runs, never duplicated
-5. Builds a Docker image tagged with the registry version and commit SHA
-6. Uploads all reports as downloadable CI artifacts
+5. Uploads all reports as downloadable CI artifacts
 
 ---
 
@@ -153,7 +151,7 @@ The MLflow/DagsHub credentials are passed through from the host environment vari
 
 ---
 
-## Running locally
+## Training locally
 
 ```bash
 # Install dependencies
