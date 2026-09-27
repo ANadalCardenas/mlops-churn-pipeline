@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 docs/
+mlruns/
 models/
 reports/
 .env
