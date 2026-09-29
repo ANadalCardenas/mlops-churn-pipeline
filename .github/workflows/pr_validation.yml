@@ -20,7 +20,7 @@ on:
     types: [opened, synchronize, reopened]
 
 env:
-  CANDIDATE_DATA_VERSION: v1  # data version trained/built for the PR branch (baseline always uses main's own default)
+  CANDIDATE_DATA_VERSION: v2  # data version trained/built for the PR branch (baseline always uses main's own default)
 
 jobs:
   validate:
